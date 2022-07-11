@@ -1,0 +1,49 @@
+01 - EXTREMELY SIMPLE CPU
+* Able to have 16 bit addressing
+* 8 bit data width
+* 8 bit address width
+* 64 byte ROM
+* 192 byte RAM
+
+REGISTERS:
+A: GP register 		(8 bits)
+B: GP register 		(8 bits)
+M: Memory register	(8 bits)
+F: Flags register 	(4 bits)
+	LESS
+	EQUAL
+	CARRY
+	BORROW
+
+INSTRUCTION LAYOUT:
+XXXX-Y-ZZZ
+
+X: 4-bit instruction identifier
+Y: 1-bit imm8/reg selection (0 = imm8, 1 = reg)
+Z: 3-bit register argument
+
+INSTRUCTIONS:
+0: MB 	reg, imm8/reg 	-> reg = imm8/reg
+1: LB 	reg, [imm8/M]   -> reg = [imm8/M]		
+2: SB 	reg, [imm8/M]	-> [imm8/M] = reg
+3: ADD^	reg, imm8/reg	-> reg = reg + imm8/reg
+4: ADC^ reg, imm8/reg	-> reg = reg + imm8/reg + c
+5: SBB^ reg, imm8/reg	-> reg = reg - imm8/reg - b
+6: AND 	reg, imm8/reg	-> reg = reg & imm8/reg
+7: OR 	reg, imm8/reg 	-> reg = reg | imm8/reg
+8: NOR	reg, imm8/reg	-> reg = ~(reg | imm8/reg)
+9: CMP^ reg, imm8/reg 	-> f = compare reg, imm8/reg
+A: PUSH imm8/reg	-> [SP--] = reg *only imm8 has 8 bytes directly after
+B: POP reg		-> reg = [++SP]
+C: JNZ imm8/reg 	-> PC = M if imm8/reg != 0, else NOP 
+D: JMP imm8/M		-> PC = imm8/M
+E: HLT			-> HALT
+F: NOP			-> NO OPERATION
+
+MEMORY LAYOUT:
+0x00...0x3f - GP ROM
+0x40...0x4F - STACK
+0x50...0x50 - STACK PTR
+0x51...0xFF - GP RAM
+
+
