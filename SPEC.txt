@@ -16,11 +16,12 @@ F: Flags register 	(4 bits)
 	BORROW
 
 INSTRUCTION LAYOUT:
-XXXX-Y-ZZZ
+XXXX-ZZZ-Y
 
 X: 4-bit instruction identifier
-Y: 1-bit imm8/reg selection (0 = imm8, 1 = reg)
 Z: 3-bit register argument
+Y: 1-bit imm8/reg selection (0 = imm8, 1 = reg)
+
 
 INSTRUCTIONS:
 0: MB 	reg, imm8/reg 	-> reg = imm8/reg

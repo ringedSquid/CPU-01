@@ -19,8 +19,8 @@ typedef struct {
 
 typedef struct {
 	byte X : 4;
-	byte Y : 1;
 	byte Z : 3;
+	byte Y : 1;
 } INSTRUCTION;
 
 //reset all registers, RAM, ROM, SP
@@ -38,10 +38,19 @@ void reset(CPU *cpu) {
 
 //load data from specified file into ROM
 void loadROM(CPU *cpu, FILE *fp) {
-	byte buff, i=0;
-	while ((fscanf(fp, "%hhu", &buff) != EOF) && (i < ROMADD)) {
-			cpu->ROM[i] = buff;	
-			i++;
+	long int size;
+	//byte buff, i=0;
+	//while ((fscanf(fp, "%hhu", &buff) != EOF) && (i < ROMADD)) {
+	//		cpu->ROM[i] = buff;
+	//		printf("%hhu : 0x%X\n", i, buff);	
+	//		i++;
+	//}
+	fseek(fp, 0L, SEEK_END);
+	size = ftell(fp)/sizeof(byte);
+	rewind(fp);
+	if (fread(cpu->ROM, sizeof(byte), size, fp) != size) {
+		fprintf(stderr, "Error reading file!\n");
+		exit(1);
 	}
 	printf("File sucsessfully loaded into ROM!\n");
 	return;
@@ -53,8 +62,8 @@ INSTRUCTION fetchInstruction(CPU *cpu) {
 	byte currentByte = (cpu->PC > ROMADD-1) ? cpu->RAM[cpu->PC] : cpu->ROM[cpu->PC];
 	INSTRUCTION buff = {
 		currentByte>>4, //X 
-		(currentByte<<4)>>7, //Y
-		(currentByte<<5)>>5 //Z
+		(currentByte<<4)>>5, //Z
+		(currentByte<<7)>>7 //Y
 	};
 	cpu->PC++;
 	//cpu->PC %= ROMADD;
@@ -123,10 +132,17 @@ void add(CPU *cpu, byte tReg, byte mode) {
 	byte *p_tReg = selReg(cpu, tReg);
 	byte s = cpu->ROM[cpu->PC];
 	if (mode == 0) {
+		if ((*p_tReg + s) > 255) {
+			cpu->F |= 0x2;
+		}
 		*p_tReg += s;
 	}
 	else {
 		byte *p_sReg = selReg(cpu, s);
+		if ((*p_tReg + *p_sReg) > 255) {
+			cpu->F |= 0x2;
+		}
+		*p_tReg += s;
 		*p_tReg += *p_sReg;
 	}
 	cpu->PC++;
@@ -139,10 +155,16 @@ void addCarry(CPU *cpu, byte tReg, byte mode) {
 	byte s = cpu->ROM[cpu->PC];
 	byte carry = (cpu->F<<2)>>3;
 	if (mode == 0) {
+		if ((*p_tReg + s + carry) < 256) {
+			cpu->F &= ~0x2;
+		}
 		*p_tReg += s + carry;
 	}
 	else {
 		byte *p_sReg = selReg(cpu, s);
+		if ((*p_tReg + *p_sReg + carry) <= 255) {
+			cpu->F &= ~0x2;
+		}
 		*p_tReg += *p_sReg + carry;
 	}
 	cpu->PC++;
@@ -155,11 +177,22 @@ void subBorrow(CPU *cpu, byte tReg, byte mode) {
 	byte s = cpu->ROM[cpu->PC];
 	byte borrow = (cpu->F<<3)>>3;
 	if (mode == 0) {
+		if ((*p_tReg - s - borrow) >= 0) {
+			cpu->F &= ~0x1;
+		}
+		else {
+			cpu->F |= 0x1;
+		}
 		*p_tReg -= s - borrow;
-		printf("File sucsessfully loaded into ROM!\n");
 	}
 	else {
 		byte *p_sReg = selReg(cpu, s);
+		if ((*p_tReg - *p_sReg - borrow) >= 0) {
+			cpu->F &= ~0x1;
+		}
+		else {
+			cpu->F |= 0x1;
+		}
 		*p_tReg -= *p_sReg - borrow;
 	}
 	cpu->PC++;
@@ -216,13 +249,25 @@ void cmp(CPU *cpu, byte tReg, byte mode) {
 	byte *p_tReg = selReg(cpu, tReg);
 	byte s = cpu->ROM[cpu->PC];
 	if (mode == 0) {
-		if (*p_tReg < s) { cpu->F |= 0x8; }
-		else if (*p_tReg == s) { cpu->F |= 0x4; }
+		if (*p_tReg < s) { 
+			cpu->F |= 0x8; 
+			cpu->F &= ~0x4;
+		}
+		else if (*p_tReg == s) {
+			cpu->F |= 0x4;
+			cpu->F &= ~0x8;
+		}
 	}
 	else {
 		byte *p_sReg = selReg(cpu, s);
-		if (*p_tReg < *p_sReg) { cpu->F |= 0x8; }
-		else if (*p_tReg == *p_sReg) { cpu->F |= 0x4; }
+		if (*p_tReg < *p_sReg) {
+			cpu->F |= 0x8; 
+			cpu->F &= ~0x4;
+		}
+		else if (*p_tReg == *p_sReg) {
+			cpu->F |= 0x4; 
+			cpu->F &= ~0x8;
+		}
 		
 	}
 	cpu->PC++;
