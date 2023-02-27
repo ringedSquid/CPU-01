@@ -329,7 +329,7 @@ void out(CPU *cpu, byte tReg, byte mode) {
 		printf("%d\n", *p_tReg);
 	}
 	else {
-		printf("%X\n", p_tReg);
+		printf("%X\n", *p_tReg);
 	}
 	return;
 }
