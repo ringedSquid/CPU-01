@@ -7,14 +7,15 @@ init:
 
 main:
 	add a, 0x5
-	ld  b, 0x51
+	ld b, 0x51
 	add b, 0x1
-	cmp b, 0xC
+	cmp b, 0x4
 	sto b, 0x51
-	mov f, ptr[b]
+	mov b, ptr[f]
 	and b, 0x4
-	jnz b 
+	jnz b
 	jmp main
+	
 
 end:
 	out a, 0
